@@ -45,8 +45,25 @@ class _RegisterPageState extends State<RegisterPage> {
       );
 
       if (userCredential?.user != null) {
-        // Create default categories for new user
-        await _categoryService.createDefaultCategories(userCredential!.user!.uid);
+        // Show success message immediately
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Cuenta creada exitosamente'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+        
+        // Create default categories in background (don't wait)
+        _categoryService.createDefaultCategories(userCredential!.user!.uid)
+            .catchError((error) {
+          // Log error but don't block the user
+          print('Error creating default categories: $error');
+        });
+        
+        // The AuthGate will automatically redirect to HomePage
+        // when it detects the user is authenticated
       }
     } catch (e) {
       if (mounted) {
