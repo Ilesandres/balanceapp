@@ -5,6 +5,7 @@ import 'package:balance_app/pages/categories_page.dart';
 import 'package:balance_app/pages/settings_page.dart';
 import 'package:balance_app/services/auth_service.dart';
 import 'package:balance_app/services/transaction_service.dart';
+import 'package:balance_app/models/transaction_type.dart';
 import 'package:balance_app/themes/theme_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -22,24 +23,7 @@ class _HomePageState extends State<HomePage> {
   final _authService = AuthService();
   final _transactionService = TransactionService();
   DateTime _selectedMonth = DateTime.now();
-  Map<String, double> _monthlySummary = {};
-
-  @override
-  void initState() {
-    super.initState();
-    _loadMonthlySummary();
-  }
-
-  Future<void> _loadMonthlySummary() async {
-    try {
-      final summary = await _transactionService.getMonthlySummary(_selectedMonth);
-      setState(() {
-        _monthlySummary = summary;
-      });
-    } catch (e) {
-      // Handle error silently for now
-    }
-  }
+  
 
   @override
   Widget build(BuildContext context) {
@@ -155,7 +139,6 @@ class _HomePageState extends State<HomePage> {
                         _selectedMonth.month - 1,
                       );
                     });
-                    _loadMonthlySummary();
                   },
                 ),
                 Text(
@@ -173,47 +156,61 @@ class _HomePageState extends State<HomePage> {
                         _selectedMonth.month + 1,
                       );
                     });
-                    _loadMonthlySummary();
                   },
                 ),
               ],
             ),
           ),
 
-          // Summary cards
+          // Summary cards (live from stream)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _buildSummaryCard(
-                    'Ingresos',
-                    _monthlySummary['income'] ?? 0.0,
-                    Colors.green,
-                    Icons.trending_up,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _buildSummaryCard(
-                    'Gastos',
-                    _monthlySummary['expense'] ?? 0.0,
-                    Colors.red,
-                    Icons.trending_down,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _buildSummaryCard(
-                    'Balance',
-                    _monthlySummary['balance'] ?? 0.0,
-                    (_monthlySummary['balance'] ?? 0.0) >= 0
-                        ? Colors.blue
-                        : Colors.orange,
-                    Icons.account_balance_wallet,
-                  ),
-                ),
-              ],
+            child: StreamBuilder<List<transaction_model.Transaction>>(
+              stream: _transactionService.getTransactionsForMonth(_selectedMonth),
+              builder: (context, snapshot) {
+                final transactions = snapshot.data ?? [];
+                double income = 0.0;
+                double expense = 0.0;
+                for (final t in transactions) {
+                  if (t.type == TransactionType.income) {
+                    income += t.amount;
+                  } else {
+                    expense += t.amount;
+                  }
+                }
+                final balance = income - expense;
+
+                return Row(
+                  children: [
+                    Expanded(
+                      child: _buildSummaryCard(
+                        'Ingresos',
+                        income,
+                        Colors.green,
+                        Icons.trending_up,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _buildSummaryCard(
+                        'Gastos',
+                        expense,
+                        Colors.red,
+                        Icons.trending_down,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _buildSummaryCard(
+                        'Balance',
+                        balance,
+                        balance >= 0 ? Colors.blue : Colors.orange,
+                        Icons.account_balance_wallet,
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
           ),
 
@@ -361,7 +358,8 @@ class _HomePageState extends State<HomePage> {
                     ),
                   );
                 }
-                _loadMonthlySummary();
+                    
+                    
               } catch (e) {
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
