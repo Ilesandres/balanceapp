@@ -7,7 +7,6 @@ class TransactionService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // Get transactions stream for current user
   Stream<List<transaction_model.Transaction>> getTransactionsStream() {
     final user = _auth.currentUser;
     if (user == null) return Stream.value([]);
@@ -22,7 +21,6 @@ class TransactionService {
     });
   }
 
-  // Get transactions for a specific month
   Stream<List<transaction_model.Transaction>> getTransactionsForMonth(DateTime month) {
     final user = _auth.currentUser;
     if (user == null) return Stream.value([]);
@@ -42,7 +40,6 @@ class TransactionService {
     });
   }
 
-  // Add new transaction
   Future<String> addTransaction(transaction_model.Transaction transaction) async {
     try {
       final docRef = await _firestore.collection('transactions').add(
@@ -54,7 +51,6 @@ class TransactionService {
     }
   }
 
-  // Update transaction
   Future<void> updateTransaction(transaction_model.Transaction transaction) async {
     try {
       await _firestore.collection('transactions').doc(transaction.id).update(
@@ -65,7 +61,6 @@ class TransactionService {
     }
   }
 
-  // Delete transaction
   Future<void> deleteTransaction(String transactionId) async {
     try {
       await _firestore.collection('transactions').doc(transactionId).delete();
@@ -74,7 +69,6 @@ class TransactionService {
     }
   }
 
-  // Get monthly summary
   Future<Map<String, double>> getMonthlySummary(DateTime month) async {
     final user = _auth.currentUser;
     if (user == null) return {'income': 0.0, 'expense': 0.0};
@@ -112,7 +106,6 @@ class TransactionService {
     }
   }
 
-  // Get transactions by category
   Future<List<transaction_model.Transaction>> getTransactionsByCategory(
     String categoryId,
     DateTime month,

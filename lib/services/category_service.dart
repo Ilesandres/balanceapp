@@ -7,7 +7,6 @@ class CategoryService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // Get categories stream for current user
   Stream<List<Category>> getCategoriesStream() {
     final user = _auth.currentUser;
     if (user == null) return Stream.value([]);
@@ -22,7 +21,6 @@ class CategoryService {
     });
   }
 
-  // Get categories by type
   Stream<List<Category>> getCategoriesByType(TransactionType type) {
     final user = _auth.currentUser;
     if (user == null) return Stream.value([]);
@@ -38,7 +36,6 @@ class CategoryService {
     });
   }
 
-  // Add new category
   Future<String> addCategory(Category category) async {
     try {
       final docRef = await _firestore.collection('categories').add(
@@ -50,7 +47,6 @@ class CategoryService {
     }
   }
 
-  // Update category
   Future<void> updateCategory(Category category) async {
     try {
       await _firestore.collection('categories').doc(category.id).update(
@@ -61,7 +57,6 @@ class CategoryService {
     }
   }
 
-  // Delete category
   Future<void> deleteCategory(String categoryId) async {
     try {
       await _firestore.collection('categories').doc(categoryId).delete();
@@ -70,7 +65,6 @@ class CategoryService {
     }
   }
 
-  // Create default categories for new user
   Future<void> createDefaultCategories(String userId) async {
     final defaultCategories = [
       // Income categories
